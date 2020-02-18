@@ -14,7 +14,7 @@
 %        LinkOrigin is not used here; Mode is also not used, since here we assume mode is always bike 
 % Type: reason for the trip; not used
 % Mode: bike
--define( wooper_construct_parameters, ActorSettings, CarName , ListTripsFinal , StartTime , Type , Park , Mode, DigitalRailsCapable ).
+-define( wooper_construct_parameters, ActorSettings, BikeName , ListTripsFinal , StartTime , Type , Park , Mode, DigitalRailsCapable ).
 
 % Declaring all variations of WOOPER-defined standard life-cycle operations:
 % (template pasted, just two replacements performed to update arities)
@@ -40,13 +40,13 @@
 				class_Actor:name(), pid() , parameter() , parameter() , parameter() , parameter(), parameter() ) -> wooper:state().
 construct( State, ?wooper_construct_parameters ) ->
 
-	ActorState = class_Actor:construct( State, ActorSettings, CarName ),
+	ActorState = class_Actor:construct( State, ActorSettings, BikeName ),
 
 	InitialTrip = lists:nth( 1 , ListTripsFinal ),	
 	Path = element( 2 , InitialTrip ),
 
 	NewState = setAttributes( ActorState, [
-		{ car_name, CarName },
+		{ bike_name, BikeName },
 		{ trips , ListTripsFinal },
 		{ type, Type },
 		{ distance , 0 },
@@ -92,7 +92,7 @@ verify_next_action( State , _Trips , _Path ) ->
 	Type = getAttribute( State , type ),						
 	TotalLength = getAttribute( State , distance ),
 	StartTime = getAttribute( State , start_time ),
-	CarId = getAttribute( State , car_name ),	
+	CarId = getAttribute( State , bike_name ),	
 	LastPosition = getAttribute( State , car_position ),
 	Mode = getAttribute( State , mode ), 
 
@@ -287,9 +287,9 @@ move_to_next_vertex( State ) ->
 	StateAfterMovement = setAttributes( NewState , [
 		{distance , TotalLength} , {car_position , Id} , {last_vertex, CurrentVertex}, {last_vertex_pid , Edge} , {path , [NextVertex | Path]}] ), 
 
-	% io:format("t=~p: ~p; ~p->~p ~n", [class_Actor:get_current_tick_offset(State), getAttribute(State, car_name), CurrentVertex, NextVertex]),
+	% io:format("t=~p: ~p; ~p->~p ~n", [class_Actor:get_current_tick_offset(State), getAttribute(State, bike_name), CurrentVertex, NextVertex]),
 	% io:format("~p Tick: ~p; ~p => ~p, Dist: ~p, Time: ~p, Avg. Speed: ~p, NextTick: ~p\n", 
-	% 	[getAttribute( State , car_name ), class_Actor:get_current_tick_offset( State ), CurrentVertex, NextVertex, Distance, Time, Distance / Time, class_Actor:get_current_tick_offset( StateAfterMovement ) + Time]),
+	% 	[getAttribute( State , bike_name ), class_Actor:get_current_tick_offset( State ), CurrentVertex, NextVertex, Distance, Time, Distance / Time, class_Actor:get_current_tick_offset( StateAfterMovement ) + Time]),
 
 %	print_movement(State, StateAfterMovement),
 	executeOneway( StateAfterMovement , addSpontaneousTick , class_Actor:get_current_tick_offset( StateAfterMovement ) + Time ).
