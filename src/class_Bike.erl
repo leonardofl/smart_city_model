@@ -14,7 +14,7 @@
 %        LinkOrigin is not used here; Mode is also not used, since here we assume mode is always bike 
 % Type: reason for the trip; not used
 % Mode: bike
--define( wooper_construct_parameters, ActorSettings, BikeName , ListTripsFinal , StartTime , Type , Park , Mode, DigitalRailsCapable ).
+-define( wooper_construct_parameters, ActorSettings, BikeName , Trips , StartTime , Type , Park , Mode, DigitalRailsCapable ).
 
 % Declaring all variations of WOOPER-defined standard life-cycle operations:
 % (template pasted, just two replacements performed to update arities)
@@ -42,12 +42,12 @@ construct( State, ?wooper_construct_parameters ) ->
 
 	ActorState = class_Actor:construct( State, ActorSettings, BikeName ),
 
-	InitialTrip = lists:nth( 1 , ListTripsFinal ),	
+	InitialTrip = lists:nth( 1 , Trips ),	
 	Path = element( 2 , InitialTrip ),
 
 	NewState = setAttributes( ActorState, [
 		{ bike_name, BikeName },
-		{ trips , ListTripsFinal },
+		{ trips , Trips },
 		{ type, Type },
 		{ distance , 0 },
 		{ car_position, -1 },
