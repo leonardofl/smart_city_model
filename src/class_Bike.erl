@@ -6,6 +6,11 @@
 % Aí roda "docker build -t interscsimulator .", que vai tentar compilar class_Bike
 % e dar erro se não conseguir.
 
+% remover
+% DigitalRailsCapable
+% platoon
+% is_changing_dr
+
 -define( wooper_superclasses, [ class_Actor ] ).
 
 % parameters taken by the constructor ('construct').
@@ -14,6 +19,7 @@
 %        LinkOrigin is not used here; Mode is also not used, since here we assume mode is always bike 
 % Type: reason for the trip; not used
 % Mode: bike
+% Park and DigitalRailsCapable: not used (it seems it's hard to remove them from the constructor without ofending the compiler)
 -define( wooper_construct_parameters, ActorSettings, BikeName , Trips , StartTime , Type , Park , Mode, DigitalRailsCapable ).
 
 % Declaring all variations of WOOPER-defined standard life-cycle operations:
