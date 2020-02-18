@@ -1,9 +1,19 @@
-%Class that represents a person that can moves around the city graph on foot or by car
 -module(class_Bike).
+% based on class_Car
+
+% "Teste" de class_Bike é a compilação.
+% Primeiro roda "erlc class_Bike.erl" pra antecipar erros de sintaxe.
+% Aí roda "docker build -t interscsimulator .", que vai tentar compilar class_Bike
+% e dar erro se não conseguir.
 
 -define( wooper_superclasses, [ class_Actor ] ).
 
 % parameters taken by the constructor ('construct').
+% Trips: list of trips since the trip can be a multi-trip
+%        each trip is a tuple { Mode , Path , LinkOrigin }
+%        LinkOrigin is not used here; Mode is also not used, since here we assume mode is always bike 
+% Type: reason for the trip; not used
+% Mode: bike
 -define( wooper_construct_parameters, ActorSettings, CarName , ListTripsFinal , StartTime , Type , Park , Mode, DigitalRailsCapable ).
 
 % Declaring all variations of WOOPER-defined standard life-cycle operations:
@@ -17,7 +27,7 @@
 		 construct/9, destruct/1 ).
 
 % Method declarations.
--define( wooper_method_export, actSpontaneous/1, onFirstDiasca/2, get_parking_spot/3 , set_new_path/3, receive_signal_state/3 ).
+-define( wooper_method_export, actSpontaneous/1, onFirstDiasca/2, get_parking_spot/3 , receive_signal_state/3 ).
 
 % Allows to define WOOPER base variables and methods for that class:
 -include("smart_city_test_types.hrl").
@@ -307,12 +317,6 @@ get_parking_spot( State , IdNode , _ParkingPID ) ->
 		class_Actor:send_actor_message( City , { get_path, { CurrentVertice , Node } } , State )
 	end.
  
-set_new_path( State , NewPath , _CityPID ) ->
-	Path = element( 1 , NewPath ), 
-	StateDict = setAttributes( State , [ { path , Path } , { park_status , finish } ] ),
-	Trips = getAttribute( StateDict , trips ), 
-	CurrentTrip = list_utils:get_element_at( Trips , 1 ),
-        request_position( StateDict , CurrentTrip , Path ).
 
 -spec onFirstDiasca( wooper:state(), pid() ) -> oneway_return().
 onFirstDiasca( State, _SendingActorPid ) ->
@@ -322,20 +326,3 @@ onFirstDiasca( State, _SendingActorPid ) ->
 	NewState = setAttribute( State , start_time , FirstActionTime ),
 	executeOneway( NewState , addSpontaneousTick , FirstActionTime ).
 
-%print_movement( PreviousState, NextState ) ->
-% 	CarId = getAttribute( PreviousState, car_name),
-% 	LastPosition = getAttribute( PreviousState , car_position ),
-% 	Type = getAttribute( PreviousState , type ),
-% 	CurrentTickOffset = class_Actor:get_current_tick_offset( NextState ),
-% 	NewPosition = getAttribute( NextState, car_position),
-% 	case LastPosition == -1 of
-% 		false ->
-% 			print:write_movement_car_message( CarId, LastPosition, Type, CurrentTickOffset, NewPosition, xml );
-% 		true -> 
-% 			CurrentTrip = lists:nth( 1 , getAttribute( PreviousState , trips ) ),
-% 			TripVertices = element(2, CurrentTrip),
-% 			EdgeId = list_to_atom(lists:concat([lists:nth(1, TripVertices), lists:nth(2, TripVertices)])),
-%			Edge = lists:nth(1, ets:lookup(list_streets , EdgeId)),
-% 			LinkOrigin = element(2, Edge),
-% 			print:write_initial_message( CarId, Type, CurrentTickOffset, LinkOrigin, NewPosition, xml )
-% 	end.
