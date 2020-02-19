@@ -18,7 +18,7 @@
 % Type: reason for the trip; not used
 % Mode: bike
 % Park and DigitalRailsCapable: not used (it seems it's hard to remove them from the constructor without ofending the compiler)
--define( wooper_construct_parameters, ActorSettings, BikeName , Trips , StartTime , Type , Park , Mode, _DigitalRailsCapable ).
+-define( wooper_construct_parameters, ActorSettings, BikeName , Trips , StartTime , Type , _Park , Mode, _DigitalRailsCapable ).
 
 % Declaring all variations of WOOPER-defined standard life-cycle operations:
 % (template pasted, just two replacements performed to update arities)
@@ -31,7 +31,7 @@
 		 construct/9, destruct/1 ).
 
 % Method declarations.
--define( wooper_method_export, actSpontaneous/1, onFirstDiasca/2, get_parking_spot/3 , receive_signal_state/3 ).
+-define( wooper_method_export, actSpontaneous/1, onFirstDiasca/2, receive_signal_state/3 ).
 
 % Allows to define WOOPER base variables and methods for that class:
 -include("smart_city_test_types.hrl").
@@ -49,7 +49,7 @@ construct( State, ?wooper_construct_parameters ) ->
 	InitialTrip = lists:nth( 1 , Trips ),	
 	Path = element( 2 , InitialTrip ),
 
-	NewState = setAttributes( ActorState, [
+	InitialState = setAttributes( ActorState, [
 		{ bike_name, BikeName },
 		{ trips , Trips },
 		{ type, Type },
@@ -62,13 +62,8 @@ construct( State, ?wooper_construct_parameters ) ->
 		{ last_vertex_pid , ok },
 		{ previous_dr_name, nil }]
 	),
+    InitialState.
 
-	case Park of
-		ok ->
-			setAttribute( NewState , park_status , not_parking );
-		_ ->
-			setAttributes( NewState , [ { park_status , find } , { park , Park } ] )
-	end.
 
 -spec destruct( wooper:state() ) -> wooper:state().
 destruct( State ) ->
@@ -123,40 +118,11 @@ request_position( State , _Trip , Path ) when Path == finish ->
 request_position( State , Trip , Path ) ->
 	case length( Path ) > 1 of
 		true ->	get_next_vertex( State , Path , element( 1 , Trip ) );
-		false -> verify_park( State , element( 1 , Trip ) )
+		false -> 
+	        FinalState = setAttribute( State, path , finish ),
+	        executeOneway( FinalState , scheduleNextSpontaneousTick )
 	end.
 
-verify_park( State , Mode ) when Mode == walk ->
-	FinalState = setAttribute( State, path , finish ),
-	executeOneway( FinalState , scheduleNextSpontaneousTick );
-
-
-verify_park( State , _Mode ) ->						
-	DecrementVertex = getAttribute( State , last_vertex_pid ),	
-	ets:update_counter( list_streets , DecrementVertex , { 6 , -1 }),
-	ParkStatus = getAttribute( State , park_status ),
-
-	case ParkStatus of
-
-		not_parking ->
-			FinalState = setAttribute( State , path , finish ),
-
-			executeOneway( FinalState , scheduleNextSpontaneousTick );
-		finish ->
-
-			Park = getAttribute( State , park ),
-					
-			Parking = ets:lookup_element(options, parking_pid, 2 ),
-			NewState = class_Actor:send_actor_message( Parking, { spot_in_use, { Park } } , State ),
-									
-			FinalState = setAttribute( NewState, path , finish ),
-
-			executeOneway( FinalState , scheduleNextSpontaneousTick );
-		find ->
-			Park = getAttribute( State , park ),
-			Parking = ets:lookup_element(options, parking_pid, 2 ),
-			class_Actor:send_actor_message( Parking, { spot_available, { Park } } , State )
-	end.
 
 get_next_vertex( State , [ Current | Path ] , Mode ) when Mode == walk ->			
 	Vertices = list_to_atom( lists:concat( [ Current , lists:nth( 1 , Path ) ] )),
@@ -231,16 +197,6 @@ receive_signal_state( State , {Color, TicksUntilNextColor}, _TrafficLightPid ) -
 			move_to_next_vertex(State)
 	end.
 
-get_parking_spot( State , IdNode , _ParkingPID ) ->
-	Node = element( 1 , IdNode ),
-	case Node of 
-	     nok ->
-		io:format( "nao disponivel");
-    	     _ ->
-		{ Path , City } = { getAttribute( State , path ), ets:lookup_element(options, city_pid, 2 ) },
-		CurrentVertice = lists:nth( 1 , Path ),
-		class_Actor:send_actor_message( City , { get_path, { CurrentVertice , Node } } , State )
-	end.
  
 
 -spec onFirstDiasca( wooper:state(), pid() ) -> oneway_return().
