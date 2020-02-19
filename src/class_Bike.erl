@@ -137,8 +137,14 @@ get_next_vertex( State , [ Current | Path ] ) ->	% baseado no Mode == walk do cl
 	Vertices = list_to_atom( lists:concat( [ Current , lists:nth( 1 , Path ) ] )),
 	
     LinkData = lists:nth( 1, ets:lookup( list_streets , Vertices ) ),
-    {_, Id, Length, _Capacity, _Freespeed, _NumberCars, _Lanes, _DR} = LinkData,
-    Speed = traffic_models:get_speed_bike(), % TODO passar parâmetros LinkData
+    {_, Id, Length, Capacity, _Freespeed, NumberCars, _Lanes, _DR} = LinkData,
+    PersonalSpeed = 12.0/3.6, % TODO obter personal speed
+    NumberBikes = 1, % TODO obter NumberBikes
+    IsCycleway = false, % TODO obter IsCycleway
+    IsCyclelane = false, % TODO obter IsCyclelane
+    AltitudeNodeFrom = 760, % TODO obter altitudes
+    AltitudeNodeTo = 760, % obs: 760 é a altitude de São Paulo
+    Speed = traffic_models:get_speed_bike(PersonalSpeed, Length, Capacity, NumberCars, NumberBikes, IsCycleway, IsCyclelane, AltitudeNodeFrom, AltitudeNodeTo), 
     Time = round((Length / Speed) + 1),
     Distance = round(Length),
 
