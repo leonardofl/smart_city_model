@@ -8,7 +8,6 @@
 
 % remover
 % DigitalRailsCapable
-% platoon
 % is_changing_dr
 
 -define( wooper_superclasses, [ class_Actor ] ).
@@ -62,8 +61,7 @@ construct( State, ?wooper_construct_parameters ) ->
 		{ mode , Mode },
 		{ last_vertex , ok },
 		{ last_vertex_pid , ok },
-		{ previous_dr_name, nil },
-		{ in_platoon, false }]
+		{ previous_dr_name, nil }]
 	),
 
 	case Park of
@@ -219,17 +217,6 @@ move_to_next_vertex( State ) ->
 	Edge = list_to_atom(lists:concat([ CurrentVertex , NextVertex ])),
 
 	DecrementVertex = getAttribute( State , last_vertex_pid ),
-	Mode = getAttribute( State , mode ), 
-	case Mode of
-		platoon -> 
-	%		io:format( "platoon" ),
-			ets:update_counter(drs_streets, Edge , { 2 , 1 } ),
-			case DecrementVertex of
-				ok -> ok;
-				_ -> ets:update_counter( drs_streets, DecrementVertex , { 2 , -1 } )
-			end;
-	 	_ -> ok
-	end,
 		
 	case DecrementVertex of
 		ok -> ok;
