@@ -8,7 +8,6 @@
 
 % remover
 % DigitalRailsCapable
-% is_changing_dr
 
 -define( wooper_superclasses, [ class_Actor ] ).
 
@@ -159,8 +158,6 @@ verify_park( State , _Mode ) ->
 			class_Actor:send_actor_message( Parking, { spot_available, { Park } } , State )
 	end.
 
-is_changing_dr(_, _) -> false.
-
 get_next_vertex( State , [ Current | Path ] , Mode ) when Mode == walk ->			
 	Vertices = list_to_atom( lists:concat( [ Current , lists:nth( 1 , Path ) ] )),
 	
@@ -176,26 +173,8 @@ get_next_vertex( State , [ Current | Path ] , Mode ) when Mode == walk ->
 
 get_next_vertex( State, [ _CurrentVertex | _ ], _Mode) -> 
 	LastVertex = getAttribute(State, last_vertex),
-	[CurrentVertex | [ NextVertex | _ ]] = getAttribute(State, path),
-	% [ CurrentVertex | _ ] = getAttribute( State , path ),
-	Edge = list_to_atom(lists:concat([CurrentVertex, NextVertex])),
+	[CurrentVertex | _ ] = getAttribute(State, path),
 
-	LinkData = lists:nth(1, ets:lookup(list_streets, Edge)),
-	{_, _, _, _, _, _, _Lanes, DigitalRailsInfo} = LinkData,
-
-	_ChangingDR = is_changing_dr(State, DigitalRailsInfo),
-%	case ChangingDR of 
-%		true ->
-%			{Name, _DRLanes, Cycle, Bandwidth, _, _} = DigitalRailsInfo,
-%			T = round(rand:uniform() * Cycle),
-%			StateAfter = setAttributes(State, [{previous_dr_name, Name}]),
-%		 	case T > Bandwidth of
-%				true -> executeOneway(StateAfter, addSpontaneousTick, class_Actor:get_current_tick_offset(StateAfter) + T);
-%				_ -> move_to_next_vertex(StateAfter)
-%			end;
-%		false -> move_to_next_vertex(State)
-%	end.
-	
 	% Current vertex is an atom here, but at the ets it is a string. Must convert:
 	CurrentVertexStr = lists:flatten(io_lib:format("~s", [CurrentVertex])),
 	Matches = ets:lookup(traffic_signals, CurrentVertexStr),
