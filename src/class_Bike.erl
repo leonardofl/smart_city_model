@@ -82,8 +82,7 @@ verify_next_action( State , Trips , Path ) when length( Trips ) == 0, Path == fi
 	executeOneway( State , declareTermination );
 
 verify_next_action( State , Trips , Path ) when length( Trips ) > 0 ->
-	CurrentTrip = lists:nth( 1 , Trips ),		
-	?wooper_return_state_only( request_position( State , CurrentTrip , Path ) );
+	?wooper_return_state_only( request_position( State , Path ) );
 
 verify_next_action( State , _Trips , _Path ) ->
 	Type = getAttribute( State , type ),						
@@ -99,7 +98,7 @@ verify_next_action( State , _Trips , _Path ) ->
 
 	executeOneway( PathFinish , scheduleNextSpontaneousTick ).
 
-request_position( State , _Trip , Path ) when Path == finish ->
+request_position( State , Path ) when Path == finish ->
 	CurrentTickOffset = class_Actor:get_current_tick_offset( State ),
 	Trips = getAttribute( State , trips ), 
 	NewTrips = list_utils:remove_element_at( Trips , 1 ),
@@ -115,16 +114,16 @@ request_position( State , _Trip , Path ) when Path == finish ->
 	executeOneway( NewState , addSpontaneousTick , CurrentTickOffset + 1 );	
 
 
-request_position( State , Trip , Path ) ->
+request_position( State , Path ) ->
 	case length( Path ) > 1 of
-		true ->	get_next_vertex( State , Path , element( 1 , Trip ) );
+		true ->	get_next_vertex( State , Path );
 		false -> 
 	        FinalState = setAttribute( State, path , finish ),
 	        executeOneway( FinalState , scheduleNextSpontaneousTick )
 	end.
 
 
-get_next_vertex( State , [ Current | Path ] , Mode ) when Mode == walk ->			
+get_next_vertex( State , [ Current | Path ] ) ->	% baseado no Mode == walk do class_Car					
 	Vertices = list_to_atom( lists:concat( [ Current , lists:nth( 1 , Path ) ] )),
 	
 	Data = lists:nth( 1, ets:lookup( list_streets , Vertices ) ),
@@ -135,27 +134,8 @@ get_next_vertex( State , [ Current | Path ] , Mode ) when Mode == walk ->
 
 	%print_movement( State ),
 
-	executeOneway( FinalState , addSpontaneousTick , class_Actor:get_current_tick_offset( FinalState ) + Time );
+	executeOneway( FinalState , addSpontaneousTick , class_Actor:get_current_tick_offset( FinalState ) + Time ).
 
-get_next_vertex( State, [ _CurrentVertex | _ ], _Mode) -> 
-	LastVertex = getAttribute(State, last_vertex),
-	[CurrentVertex | _ ] = getAttribute(State, path),
-
-	% Current vertex is an atom here, but at the ets it is a string. Must convert:
-	CurrentVertexStr = lists:flatten(io_lib:format("~s", [CurrentVertex])),
-	Matches = ets:lookup(traffic_signals, CurrentVertexStr),
-
-	case length(Matches) of
-		0 -> move_to_next_vertex(State);
-	 	_ -> 	
-			case LastVertex of
-				ok -> move_to_next_vertex(State);
-				_ ->
-					{_, TrafficSignalsPid} = lists:nth(1, Matches),
-					class_Actor:send_actor_message(TrafficSignalsPid, {querySignalState, LastVertex}, State)
-			end
-	 end.
-	%move_to_next_vertex(State).
 
 move_to_next_vertex( State ) ->
 	[ CurrentVertex | [ NextVertex | Path ] ] = getAttribute( State , path ),
