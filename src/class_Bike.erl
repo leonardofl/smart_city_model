@@ -59,6 +59,9 @@ construct( State, ?wooper_construct_parameters ) ->
 	InitialTrip = lists:nth( 1 , Trips ),	
 	Path = element( 2 , InitialTrip ),
 
+    % each bike agent has a different personal speed
+    PersonalSpeed = traffic_models:get_personal_bike_speed(),
+
 	InitialState = setAttributes( ActorState, [
 		{ bike_name, BikeName },
 		{ trips , Trips },
@@ -70,7 +73,8 @@ construct( State, ?wooper_construct_parameters ) ->
 		{ mode , Mode },
 		{ last_vertex , ok },
 		{ last_vertex_pid , ok },
-		{ previous_dr_name, nil }]
+		{ previous_dr_name, nil },
+        { personal_speed, PersonalSpeed}]
 	),
     InitialState.
 
@@ -138,7 +142,7 @@ get_next_vertex( State , [ Current | Path ] ) ->	% baseado no Mode == walk do cl
 	
     LinkData = lists:nth( 1, ets:lookup( list_streets , Vertices ) ),
     {_, Id, Length, Capacity, _Freespeed, NumberCars, _Lanes, _DR} = LinkData,
-    PersonalSpeed = 12.0/3.6, % TODO obter personal speed
+    PersonalSpeed = getAttribute( State , personal_speed ),
     NumberBikes = 1, % TODO obter NumberBikes
     IsCycleway = false, % TODO obter IsCycleway
     IsCyclelane = false, % TODO obter IsCyclelane
