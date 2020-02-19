@@ -20,7 +20,7 @@
 % Type: reason for the trip; not used
 % Mode: bike
 % Park and DigitalRailsCapable: not used (it seems it's hard to remove them from the constructor without ofending the compiler)
--define( wooper_construct_parameters, ActorSettings, BikeName , Trips , StartTime , Type , Park , Mode, DigitalRailsCapable ).
+-define( wooper_construct_parameters, ActorSettings, BikeName , Trips , StartTime , Type , Park , Mode, _DigitalRailsCapable ).
 
 % Declaring all variations of WOOPER-defined standard life-cycle operations:
 % (template pasted, just two replacements performed to update arities)
@@ -63,8 +63,7 @@ construct( State, ?wooper_construct_parameters ) ->
 		{ last_vertex , ok },
 		{ last_vertex_pid , ok },
 		{ previous_dr_name, nil },
-		{ in_platoon, false },
-		{ digital_rails_capable, DigitalRailsCapable}] 
+		{ in_platoon, false }]
 	),
 
 	case Park of
@@ -162,16 +161,6 @@ verify_park( State , _Mode ) ->
 			class_Actor:send_actor_message( Parking, { spot_available, { Park } } , State )
 	end.
 
-is_changing_dr(State, {Name, _DRLanes, _Cycle, _Bandwidth, _, _}) ->
-	case getAttribute(State, digital_rails_capable) of 
-		true -> 
-			case getAttribute(State, previous_dr_name) of
-				Name -> false;
-				_ -> true
-			end;
-		_ -> false
-	end;
-
 is_changing_dr(_, _) -> false.
 
 get_next_vertex( State , [ Current | Path ] , Mode ) when Mode == walk ->			
@@ -242,52 +231,16 @@ move_to_next_vertex( State ) ->
 	 	_ -> ok
 	end,
 		
-	{ Data, NewState } = case getAttribute(State, digital_rails_capable) of
-		true ->  
-			NewNewNewState = case Mode of
-				platoon -> 
-					case DecrementVertex of
-						ok -> ok;
-						_  -> ets:update_counter( list_streets_dr, DecrementVertex , { 6 , -1 })
-					end,	
-					ets:update_counter( list_streets_dr , Edge , { 6 , 1 }),
-					State;
-				car ->
-					IsPlatoon = getAttribute( State, in_platoon ),
-					NewNewState = case IsPlatoon of
-						true ->	
-							State;				
-						false -> 
-							case DecrementVertex of
-								ok -> ok;
-								_  -> ets:update_counter( list_streets_dr, DecrementVertex , { 6 , -1 })
-							end,	
-							StreetDR = ets:lookup( drs_streets, Edge ),
-							HasDR = lists:nth(1, StreetDR),
-							StatePlatoon = case element( 2 , HasDR ) > 0 of
-								true -> 
-									setAttribute( State , in_platoon , true );
-								false -> 
-									ets:update_counter( list_streets_dr , Edge , { 6 , 1 }),
-									State
-							end,
-							StatePlatoon
-					end,	
-					NewNewState
-			end,
-			DataReturn = lists:nth(1, ets:lookup(list_streets_dr , Edge)),
-			{ DataReturn , NewNewNewState };
-		_ -> 
-			case DecrementVertex of
-				ok -> ok;
-				_ -> ets:update_counter( list_streets, DecrementVertex , { 6 , -1 })
-			end,	
-			ets:update_counter( list_streets , Edge , { 6 , 1 }),
-			DataReturn = lists:nth(1, ets:lookup(list_streets , Edge)),
-			{DataReturn , State }
-	end,
+	case DecrementVertex of
+		ok -> ok;
+		_ -> ets:update_counter( list_streets, DecrementVertex , { 6 , -1 })
+	end,	
+	ets:update_counter( list_streets , Edge , { 6 , 1 }),
+	DataReturn = lists:nth(1, ets:lookup(list_streets , Edge)),
+	{ Data, NewState } = { DataReturn , State },
 
-	{ Id , Time , Distance } = traffic_models:get_speed_car(Data, getAttribute(NewState, digital_rails_capable)),
+    DigitalRailsCapable = false,
+	{ Id , Time , Distance } = traffic_models:get_speed_car(Data, DigitalRailsCapable),
 
 	TotalLength = getAttribute( NewState , distance ) + Distance,
 	StateAfterMovement = setAttributes( NewState , [
