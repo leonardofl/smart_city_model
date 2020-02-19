@@ -2,9 +2,19 @@
 % based on class_Car
 
 % "Teste" de class_Bike é a compilação.
-% Primeiro roda "erlc class_Bike.erl" pra antecipar erros de sintaxe.
+%
+% Método 1
+% Primeiro roda "erlc class_Bike.erl" pra antecipar alguns erros de sintaxe.
 % Aí roda "docker build -t interscsimulator .", que vai tentar compilar class_Bike
 % e dar erro se não conseguir.
+%
+% Método 2
+% Instalar o Erlang 20 (https://github.com/kerl/kerl).
+% Aí roda "make all" na raiz do zip só uma vez, para compilar o sim-diasca.
+% Depois roda "make" em zip/mock-simulators/smart_city_model/src,
+% isso vai compilar todas as classes em src, inclusive class_bike.
+% Esse método dá mais trabalho pra configurar, mas a compilação fica instântanea.
+% No método 1 demora bastante pra ter feedback.
 
 % remover
 % DigitalRailsCapable
