@@ -54,7 +54,7 @@ construct( State, ?wooper_construct_parameters ) ->
 		{ trips , Trips },
 		{ type, Type },
 		{ distance , 0 },
-		{ car_position, -1 },
+		{ bike_position, -1 },
 		{ start_time , StartTime },
 		{ path , Path },
 		{ mode , Mode },
@@ -89,12 +89,12 @@ verify_next_action( State , _Trips , _Path ) ->
 	Type = getAttribute( State , type ),						
 	TotalLength = getAttribute( State , distance ),
 	StartTime = getAttribute( State , start_time ),
-	CarId = getAttribute( State , bike_name ),	
-	LastPosition = getAttribute( State , car_position ),
+	BikeId = getAttribute( State , bike_name ),	
+	LastPosition = getAttribute( State , bike_position ),
 	Mode = getAttribute( State , mode ), 
 
 	CurrentTickOffset = class_Actor:get_current_tick_offset( State ), 
-	print:write_final_message( Type , TotalLength , StartTime , CarId , CurrentTickOffset , LastPosition , Mode , csv ),
+	print:write_final_message( Type , TotalLength , StartTime , BikeId , CurrentTickOffset , LastPosition , Mode , csv ),
 	PathFinish = setAttribute( State , path , finish ),
 
 	executeOneway( PathFinish , scheduleNextSpontaneousTick ).
@@ -131,7 +131,7 @@ get_next_vertex( State , [ Current | Path ] , Mode ) when Mode == walk ->
 	{ Id , Time , Distance } = traffic_models:get_speed_walk(Data, getAttribute(State, traffic_model)),
 
 	TotalLength = getAttribute( State , distance ) + Distance,
-	FinalState = setAttributes( State , [ { distance , TotalLength } , { car_position , Id } , { path , Path } ] ), 
+	FinalState = setAttributes( State , [ { distance , TotalLength } , { bike_position , Id } , { path , Path } ] ), 
 
 	%print_movement( State ),
 
@@ -176,7 +176,7 @@ move_to_next_vertex( State ) ->
 
 	TotalLength = getAttribute( NewState , distance ) + Distance,
 	StateAfterMovement = setAttributes( NewState , [
-		{distance , TotalLength} , {car_position , Id} , {last_vertex, CurrentVertex}, {last_vertex_pid , Edge} , {path , [NextVertex | Path]}] ), 
+		{distance , TotalLength} , {bike_position , Id} , {last_vertex, CurrentVertex}, {last_vertex_pid , Edge} , {path , [NextVertex | Path]}] ), 
 
 	% io:format("t=~p: ~p; ~p->~p ~n", [class_Actor:get_current_tick_offset(State), getAttribute(State, bike_name), CurrentVertex, NextVertex]),
 	% io:format("~p Tick: ~p; ~p => ~p, Dist: ~p, Time: ~p, Avg. Speed: ~p, NextTick: ~p\n", 
