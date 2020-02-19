@@ -136,8 +136,11 @@ request_position( State , Path ) ->
 get_next_vertex( State , [ Current | Path ] ) ->	% baseado no Mode == walk do class_Car					
 	Vertices = list_to_atom( lists:concat( [ Current , lists:nth( 1 , Path ) ] )),
 	
-	Data = lists:nth( 1, ets:lookup( list_streets , Vertices ) ),
-	{ Id , Time , Distance } = traffic_models:get_speed_walk(Data, getAttribute(State, traffic_model)),
+    LinkData = lists:nth( 1, ets:lookup( list_streets , Vertices ) ),
+    {_, Id, Length, _Capacity, _Freespeed, _NumberCars, _Lanes, _DR} = LinkData,
+    Speed = traffic_models:get_speed_bike(), % TODO passar parâmetros LinkData
+    Time = round((Length / Speed) + 1),
+    Distance = round(Length),
 
 	TotalLength = getAttribute( State , distance ) + Distance,
 	FinalState = setAttributes( State , [ { distance , TotalLength } , { bike_position , Id } , { path , Path } ] ), 
