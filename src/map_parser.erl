@@ -86,6 +86,10 @@ extract_link(Link , Graph ) ->
 					Capacity = children ( Attributes , capacity ),
 					Freespeed = children( Attributes , freespeed ),
 					Lanes = children( Attributes , permlanes ),
+                    %IsCyclelane = children( Attributes , cyclelane ) == "true",
+                    %IsCycleway = children( Attributes , cycleway ) == "true",
+                    % TODO associar AltitudeNodeFrom e AltitudeNodeTo aqui?
+                    % Ou deixar o z no nó?
 					RestrictedNextLinks = string:tokens(children(Attributes, restricted_next_links), ","),
 					digraph:add_edge(Graph, list_to_atom(From), list_to_atom(To), { Id , Length , Capacity , Freespeed, Lanes, RestrictedNextLinks });
 				_ -> ok
