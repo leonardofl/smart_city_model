@@ -1,6 +1,6 @@
 -module(traffic_models).
 
--export([get_speed_car/2, get_speed_walk/2, get_speed_bike/9, get_personal_bike_speed/0]).
+-export([get_speed_car/2, get_speed_walk/2, get_speed_bike/7, get_personal_bike_speed/0]).
 
 % There is DR in link and car can use it:
 get_speed_car({_, Id, Length, RawCapacity, Freespeed, NumberCars, Lanes, {_DRName, _DigitalRailsLanes, _Cycle, _Bandwidth, _Signalized, _Offset}}, true) ->
@@ -74,24 +74,21 @@ get_next_value_from_speeds_distribution() ->
     SpeedKmh/3.6.
 
 % PersonalSpeed: different people have different speeds; each agent must hold a personal speed generated once for the actor. The personal speed must be generated using the function get_personal_bike_speed.
-% Length: length of the link (meters)
 % Capacity: how many cars the link supports
 % NumberBikes: how many bikes are in the link
 % NumberCars: how many cars are in the link
 % IsCycleway: boolean
 % IsCyclelane: boolean
-% AltitudeNodeFrom: altitude of the origin node (meters)
-% AltitudeNodeTo: altitude of the target node (meters)
-get_speed_bike(PersonalSpeed, Length, Capacity, NumberCars, NumberBikes, IsCycleway, IsCyclelane, AltitudeNodeFrom, AltitudeNodeTo) ->
-    Freespeed = get_free_speed_for_bike(PersonalSpeed, Length, IsCycleway, IsCyclelane, AltitudeNodeTo, AltitudeNodeFrom),
+% Inclination: (altitude_to - altitude_from) / length 
+get_speed_bike(PersonalSpeed, Capacity, NumberCars, NumberBikes, IsCycleway, IsCyclelane, Inclination) ->
+    Freespeed = get_free_speed_for_bike(PersonalSpeed, IsCycleway, IsCyclelane, Inclination),
     Speed = speed_for_bike_considering_traffic(Freespeed, Capacity, NumberCars, NumberBikes, IsCycleway, IsCyclelane),
     Speed.
 
 
 
-get_free_speed_for_bike(PersonalSpeed, Length, IsCycleway, IsCyclelane, AltitudeNodeTo, AltitudeNodeFrom) ->
+get_free_speed_for_bike(PersonalSpeed, IsCycleway, IsCyclelane, Inclination) ->
 
-    Inclination = (AltitudeNodeTo - AltitudeNodeFrom) / Length,
     Climb = Inclination > 0.02,
     Descent = Inclination < -0.02,
 %    IsMixedTraffic = (not IsCycleway) and (not IsCyclelane),
