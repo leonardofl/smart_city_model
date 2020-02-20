@@ -14,7 +14,7 @@ get_speed_bike_tests() ->
     io:format("~n~nExecutando testes~n~n"),
     io:format("----------------------~n"),
     test_cicleway_speed_must_be_greater_than_ciclelane_speed(),
-    test_ciclelane_speed_must_be_greater_than_mixed_traffic_speed(),
+    test_mixed_traffic_speed_must_be_greater_than_cycleway_speed(),
     test_descent_speed_must_be_greater_than_plane_speed(),
     test_plane_speed_must_be_greater_than_climb_speed(),
     test_speed_is_greater_for_less_occupation_when_cicleway(),
@@ -55,9 +55,9 @@ test_cicleway_speed_must_be_greater_than_ciclelane_speed() ->
 
 
 
-test_ciclelane_speed_must_be_greater_than_mixed_traffic_speed() ->
+test_mixed_traffic_speed_must_be_greater_than_cycleway_speed() ->
 
-    CaseTest = "Velocidade em ciclofaixa tem que ser maior que velocidade em tráfego misto",
+    CaseTest = "Velocidade em tráfego misto tem que ser maior que velocidade em ciclovia (!!!)",
     io:format("Executando teste ~p~n", [CaseTest]),
 
     PersonalSpeed = 12/3.6,
@@ -65,19 +65,19 @@ test_ciclelane_speed_must_be_greater_than_mixed_traffic_speed() ->
     NumberCars = 0,
     NumberBikes = 15,
     IsCycleway = false,
-    IsCyclelane = true,
+    IsCyclelane = false,
     Inclination = 0,    
 
-    SpeedInCiclelane = traffic_models:get_speed_bike(PersonalSpeed, Capacity, NumberCars, NumberBikes, IsCycleway, IsCyclelane, Inclination),
-    assertReasonableSpeed(SpeedInCiclelane),
-
-    IsCycleway2 = false,
-    IsCyclelane2 = false,
-
-    SpeedInMixedTraffic = traffic_models:get_speed_bike(PersonalSpeed, Capacity, NumberCars, NumberBikes, IsCycleway2, IsCyclelane2, Inclination),
+    SpeedInMixedTraffic = traffic_models:get_speed_bike(PersonalSpeed, Capacity, NumberCars, NumberBikes, IsCycleway, IsCyclelane, Inclination),
     assertReasonableSpeed(SpeedInMixedTraffic),
 
-    assertXGreaterThanY(SpeedInCiclelane, SpeedInMixedTraffic),
+    IsCycleway2 = true,
+    IsCyclelane2 = false,
+
+    SpeedInCycleway = traffic_models:get_speed_bike(PersonalSpeed, Capacity, NumberCars, NumberBikes, IsCycleway2, IsCyclelane2, Inclination),
+    assertReasonableSpeed(SpeedInMixedTraffic),
+
+    assertXGreaterThanY(SpeedInMixedTraffic, SpeedInCycleway),
     
     fimDoTestCase().
 

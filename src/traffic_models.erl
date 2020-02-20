@@ -51,7 +51,7 @@ get_personal_bike_speed() ->
     % The mean speed for the OD dataset is 7.5km/h.
     % We considered the Bike Sampa dataset to me more accurate. In this Bike Sampa dataset the mean speed mixed traffic is 10km/h.
     % Therefore, we apply a factor over the sampled speed to correct the offset of the speed distribution.
-    FactorOdToBikeSampa = 10/7.5,
+    FactorOdToBikeSampa = 10/7.44,
     SampledSpeed * FactorOdToBikeSampa.
 
 get_next_value_from_speeds_distribution() ->
@@ -91,32 +91,27 @@ get_free_speed_for_bike(PersonalSpeed, IsCycleway, IsCyclelane, Inclination) ->
 
     Climb = Inclination > 0.02,
     Descent = Inclination < -0.02,
-%    IsMixedTraffic = (not IsCycleway) and (not IsCyclelane),
-%    Plane = (not Climb) and (not Descent),
+    IsMixedTraffic = (not IsCycleway) and (not IsCyclelane),
+    Plane = (not Climb) and (not Descent),
 
-    % Base for the factors (Bike Sampa dataset):
-    % Plane cyclelane: 9.6km/h
-    % Climb cyclelane: 6.8km/h
-    % Descent cyclelane: 15.1km/h
-    % Plane Cycleway: 15.5km/h
-    CyclelaneFactor = 1.2, % at Bike Sampa, mean speed is 9.6km/h
-    CyclewayFactor = 1.5, % at Bike Sampa, mean speed is 15.5km/h
-    ClimbFactor = 0.71,
-    DescentFactor = 1.57,
-
-    SpeedWithInfra = if
-        IsCyclelane -> PersonalSpeed * CyclelaneFactor;
-        IsCycleway -> PersonalSpeed * CyclewayFactor;
-        true -> PersonalSpeed
-    end,
-
-    FreeSpeed = if
-        Climb -> SpeedWithInfra * ClimbFactor;
-        Descent -> SpeedWithInfra * DescentFactor;
-        true -> SpeedWithInfra
-    end,
-
-    FreeSpeed.
+    if 
+        Plane and IsCycleway ->
+            PersonalSpeed * 1.4651;
+        Plane and IsCyclelane ->
+            PersonalSpeed * 0.5524;
+        Plane and IsMixedTraffic ->
+            PersonalSpeed * 1.5;
+        Climb and (IsCycleway or IsCyclelane) ->
+            PersonalSpeed * 0.3827;
+        Climb and IsMixedTraffic ->
+            PersonalSpeed * 0.8027;
+        Descent and (IsCycleway or IsCyclelane) ->
+            PersonalSpeed * 1.4532;
+        Descent and IsMixedTraffic ->
+            PersonalSpeed * 1.1217;
+        true ->
+            erlang:error("It should never happen, unexpected combination of arguments when calculating bike speed: IsCycleway=" ++ IsCycleway ++ ", IsCyclelane=" ++ IsCyclelane ++ ", Inclination=" ++ Inclination)
+    end.
    
 
 
