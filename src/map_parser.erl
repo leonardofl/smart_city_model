@@ -68,8 +68,16 @@ extract_node(Node , Graph ) ->
 	    case Name of
 			node -> 
 				Id = children( Attributes , id ),
-				Altitude = string:to_float(children( Attributes , z )),	
-				NodeData = { Altitude },
+				Z = children( Attributes , z ),
+				DefaultSaoPauloAltitude = 760,
+				Altitude = case Z of 
+					ok -> DefaultSaoPauloAltitude;
+					_ -> case string:to_float(Z) of
+									{error,no_float} -> list_to_integer(Z);
+									{F,_Rest} -> F
+								end
+				end,
+				NodeData = { Altitude }, 
 				digraph:add_vertex(Graph, list_to_atom(Id), NodeData);	
 			_ -> ok
 	    end;    
@@ -84,10 +92,11 @@ extract_link(Link , Graph ) ->
 					Id = children( Attributes , id ),	
 					From = children( Attributes , from ),
 					To = children( Attributes , to ),
-					{_Id, {AltitudeFrom}} = digraph:vertex(Graph, list_to_atom(From)),
-					{_Id, {AltitudeTo}} = digraph:vertex(Graph, list_to_atom(To)),
+					{_IdFrom, {AltitudeFrom}} = digraph:vertex(Graph, list_to_atom(From)),
+					{_IdTo, {AltitudeTo}} = digraph:vertex(Graph, list_to_atom(To)),
 					Length = children( Attributes , length ),
-					Inclination = (AltitudeTo - AltitudeFrom) / Length,
+					{LengthFloat, _} = string:to_float(Length),
+					Inclination = (AltitudeTo - AltitudeFrom) / LengthFloat,
 					Capacity = children ( Attributes , capacity ),
 					Freespeed = children( Attributes , freespeed ),
 					Lanes = children( Attributes , permlanes ),
