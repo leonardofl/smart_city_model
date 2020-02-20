@@ -94,6 +94,7 @@ get_free_speed_for_bike(PersonalSpeed, IsCycleway, IsCyclelane, Inclination) ->
     IsMixedTraffic = (not IsCycleway) and (not IsCyclelane),
     Plane = (not Climb) and (not Descent),
 
+    % The factors were defined based on analysis of real data from Bike Sampa
     if 
         Plane and IsCycleway ->
             PersonalSpeed * 1.4651;
