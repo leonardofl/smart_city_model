@@ -84,14 +84,17 @@ extract_link(Link , Graph ) ->
 					Id = children( Attributes , id ),	
 					From = children( Attributes , from ),
 					To = children( Attributes , to ),
+					{_Id, {AltitudeFrom}} = digraph:vertex(Graph, list_to_atom(From)),
+					{_Id, {AltitudeTo}} = digraph:vertex(Graph, list_to_atom(To)),
 					Length = children( Attributes , length ),
+					Inclination = (AltitudeTo - AltitudeFrom) / Length,
 					Capacity = children ( Attributes , capacity ),
 					Freespeed = children( Attributes , freespeed ),
 					Lanes = children( Attributes , permlanes ),
           IsCycleway = children( Attributes , cycleway ) == "true",
           IsCyclelane = children( Attributes , cyclelane ) == "true",
 					RestrictedNextLinks = string:tokens(children(Attributes, restricted_next_links), ","),
-					LinkData = { Id , Length , Capacity , Freespeed, Lanes, RestrictedNextLinks, IsCycleway, IsCyclelane },
+					LinkData = { Id , Length , Capacity , Freespeed, Lanes, RestrictedNextLinks, IsCycleway, IsCyclelane, Inclination },
 					digraph:add_edge(Graph, list_to_atom(From), list_to_atom(To), LinkData);
 				_ -> ok
 	    end;
