@@ -67,8 +67,10 @@ extract_node(Node , Graph ) ->
         #xmlElement{name=Name, attributes=Attributes} ->
 	    case Name of
 			node -> 
-				Id = children( Attributes , id ),	
-				digraph:add_vertex(Graph, list_to_atom(Id));	
+				Id = children( Attributes , id ),
+				Altitude = string:to_float(children( Attributes , z )),	
+				NodeData = { Altitude },
+				digraph:add_vertex(Graph, list_to_atom(Id), NodeData);	
 			_ -> ok
 	    end;    
 		_ -> ok
@@ -86,12 +88,11 @@ extract_link(Link , Graph ) ->
 					Capacity = children ( Attributes , capacity ),
 					Freespeed = children( Attributes , freespeed ),
 					Lanes = children( Attributes , permlanes ),
-                    %IsCyclelane = children( Attributes , cyclelane ) == "true",
-                    %IsCycleway = children( Attributes , cycleway ) == "true",
-                    % TODO associar AltitudeNodeFrom e AltitudeNodeTo aqui?
-                    % Ou deixar o z no nó?
+          IsCycleway = children( Attributes , cycleway ) == "true",
+          IsCyclelane = children( Attributes , cyclelane ) == "true",
 					RestrictedNextLinks = string:tokens(children(Attributes, restricted_next_links), ","),
-					digraph:add_edge(Graph, list_to_atom(From), list_to_atom(To), { Id , Length , Capacity , Freespeed, Lanes, RestrictedNextLinks });
+					LinkData = { Id , Length , Capacity , Freespeed, Lanes, RestrictedNextLinks, IsCycleway, IsCyclelane },
+					digraph:add_edge(Graph, list_to_atom(From), list_to_atom(To), LinkData);
 				_ -> ok
 	    end;
 		_ -> ok
