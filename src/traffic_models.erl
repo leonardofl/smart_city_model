@@ -2,29 +2,33 @@
 
 -export([get_speed_car/2, get_speed_walk/2, get_speed_bike/6, get_personal_bike_speed/0]).
 
+% Occupation: the count of vehicles in the link; one unit corresponds to one car; 
+%             one bike counts 1/5 of occupation for mixed traffic and
+%                             1/2.5 for cicleways and cyclelanes.
+%             It is the "Count" of the link.
 % There is DR in link and car can use it:
-get_speed_car({_, Id, Length, RawCapacity, Freespeed, NumberCars, Lanes, {_DRName, _DigitalRailsLanes, _Cycle, _Bandwidth, _Signalized, _Offset}}, true) ->
-	link_density_speed(Id, Length, RawCapacity, NumberCars, Freespeed, Lanes);
+get_speed_car({_, Id, Length, RawCapacity, Freespeed, Occupation, Lanes, {_DRName, _DigitalRailsLanes, _Cycle, _Bandwidth, _Signalized, _Offset}}, true) ->
+	link_density_speed(Id, Length, RawCapacity, Occupation, Freespeed, Lanes);
 
 % There is DR but not effective:
-get_speed_car({Whatever, Id, Length, RawCapacity, Freespeed, NumberCars, Lanes, {_DRName, _DigitalRailsLanes, _Cycle, _Bandwidth, _Signalized, _Offset}}, noeffect) ->
-	get_speed_car({Whatever, Id, Length, RawCapacity, Freespeed, NumberCars, Lanes, {}}, noeffect);
+get_speed_car({Whatever, Id, Length, RawCapacity, Freespeed, Occupation, Lanes, {_DRName, _DigitalRailsLanes, _Cycle, _Bandwidth, _Signalized, _Offset}}, noeffect) ->
+	get_speed_car({Whatever, Id, Length, RawCapacity, Freespeed, Occupation, Lanes, {}}, noeffect);
 
 % There is DR but car cannot use it:
-get_speed_car({_, Id, Length, RawCapacity, Freespeed, NumberCars, Lanes, {_DRName, _DigitalRailsLanes, _Cycle, _Bandwidth, _Signalized, _Offset}}, false) ->
-	link_density_speed(Id, Length, RawCapacity, NumberCars, Freespeed, Lanes);
+get_speed_car({_, Id, Length, RawCapacity, Freespeed, Occupation, Lanes, {_DRName, _DigitalRailsLanes, _Cycle, _Bandwidth, _Signalized, _Offset}}, false) ->
+	link_density_speed(Id, Length, RawCapacity, Occupation, Freespeed, Lanes);
 
 % There is no DR:
-get_speed_car({_, Id, Length, RawCapacity, Freespeed, NumberCars, Lanes, {}}, _) ->
-	link_density_speed(Id, Length, RawCapacity, NumberCars, Freespeed, Lanes).
+get_speed_car({_, Id, Length, RawCapacity, Freespeed, Occupation, Lanes, {}}, _) ->
+	link_density_speed(Id, Length, RawCapacity, Occupation, Freespeed, Lanes).
 
-link_density_speed(Id, Length, Capacity, NumberCars, Freespeed, _Lanes) ->
+link_density_speed(Id, Length, Capacity, Occupation, Freespeed, _Lanes) ->
 
 	Alpha = 1,
 	Beta = 1,
-	Speed = case NumberCars >= Capacity of
+	Speed = case Occupation >= Capacity of
 		true -> 1.0;
-		false -> Freespeed * math:pow(1 - math:pow((NumberCars / Capacity), Beta), Alpha)
+		false -> Freespeed * math:pow(1 - math:pow((Occupation / Capacity), Beta), Alpha)
 	end,
 
 	Time = (Length / Speed) + 1,
@@ -75,8 +79,6 @@ get_next_value_from_speeds_distribution() ->
 
 % PersonalSpeed: different people have different speeds; each agent must hold a personal speed generated once for the actor. The personal speed must be generated using the function get_personal_bike_speed.
 % Capacity: how many cars the link supports
-% NumberBikes: how many bikes are in the link
-% NumberCars: how many cars are in the link
 % Occupation: the count of vehicles in the link; one unit corresponds to one car; 
 %             one bike counts 1/5 of occupation for mixed traffic and
 %                             1/2.5 for cicleways and cyclelanes.
