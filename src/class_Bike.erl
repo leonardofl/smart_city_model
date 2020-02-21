@@ -183,7 +183,7 @@ move_to_next_vertex( State ) ->
 	DecrementVertex = getAttribute( State , last_vertex_pid ),
 
     LinkData = lists:nth(1, ets:lookup(list_streets , Edge)),
-    {_, Id, Length, Capacity, _Freespeed, NumberCars, _Lanes, _DR, IsCycleway, IsCyclelane, Inclination} = LinkData,
+    {_, Id, Length, Capacity, _Freespeed, Occupation, _Lanes, _DR, IsCycleway, IsCyclelane, Inclination} = LinkData,
 
     Ocupation = if 
         % Cellsize do carro = 7,5 e cellsize da bike = 3
@@ -204,7 +204,7 @@ move_to_next_vertex( State ) ->
 	
     PersonalSpeed = getAttribute( State , personal_speed ),
     NumberBikes = 1, % TODO obter NumberBikes
-    Speed = traffic_models:get_speed_bike(PersonalSpeed, Length, Capacity, NumberCars, NumberBikes, IsCycleway, IsCyclelane, Inclination), 
+    Speed = traffic_models:get_speed_bike(PersonalSpeed, Length, Capacity, Occupation, NumberBikes, IsCycleway, IsCyclelane, Inclination), 
     Time = round((Length / Speed) + 1),
     Distance = round(Length),
 
