@@ -181,15 +181,27 @@ move_to_next_vertex( State ) ->
 	Edge = list_to_atom(lists:concat([ CurrentVertex , NextVertex ])),
 
 	DecrementVertex = getAttribute( State , last_vertex_pid ),
+
+    LinkData = lists:nth(1, ets:lookup(list_streets , Edge)),
+    {_, Id, Length, Capacity, _Freespeed, NumberCars, _Lanes, _DR, IsCycleway, IsCyclelane, Inclination} = LinkData,
+
+    Ocupation = if 
+        % Cellsize do carro = 7,5 e cellsize da bike = 3
+        % Cellsize é o comprimento do veículo mais a distância de segurança
+        % Considera também que em uma faixa de carro passam duas bikes uma do lado da outra 
+        % Na ciclovia ou ciclofaixa é uma bike atrás da outra
+        (IsCycleway or IsCyclelane) -> 
+            1/2.5;
+        true ->
+            1/5
+    end,
 		
 	case DecrementVertex of
 		ok -> ok;
-		_ -> ets:update_counter( list_streets, DecrementVertex , { 6 , -1 })
+		_ -> ets:update_counter( list_streets, DecrementVertex , { 6 , -Ocupation })
 	end,	
-	ets:update_counter( list_streets , Edge , { 6 , 1 }),
+	ets:update_counter( list_streets , Edge , { 6 , Ocupation }),
 	
-    LinkData = lists:nth(1, ets:lookup(list_streets , Edge)),
-    {_, Id, Length, Capacity, _Freespeed, NumberCars, _Lanes, _DR, IsCycleway, IsCyclelane, Inclination} = LinkData,
     PersonalSpeed = getAttribute( State , personal_speed ),
     NumberBikes = 1, % TODO obter NumberBikes
     Speed = traffic_models:get_speed_bike(PersonalSpeed, Length, Capacity, NumberCars, NumberBikes, IsCycleway, IsCyclelane, Inclination), 
@@ -204,7 +216,6 @@ move_to_next_vertex( State ) ->
 	% io:format("~p Tick: ~p; ~p => ~p, Dist: ~p, Time: ~p, Avg. Speed: ~p, NextTick: ~p\n", 
 	% 	[getAttribute( State , bike_name ), class_Actor:get_current_tick_offset( State ), CurrentVertex, NextVertex, Distance, Time, Distance / Time, class_Actor:get_current_tick_offset( StateAfterMovement ) + Time]),
 
-%	print_movement(State, StateAfterMovement),
 	executeOneway( StateAfterMovement , addSpontaneousTick , class_Actor:get_current_tick_offset( StateAfterMovement ) + Time ).
 
 
