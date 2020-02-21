@@ -59,8 +59,14 @@ construct( State, ?wooper_construct_parameters ) ->
 	InitialTrip = lists:nth( 1 , Trips ),	
 	Path = element( 2 , InitialTrip ),
 
-    % each bike agent has a different personal speed
-    PersonalSpeed = traffic_models:get_personal_bike_speed(),
+	case Mode of 
+		bike -> ok;
+		_ ->
+			erlang:error("It should never happen; class_Bike should receive only bike as mode, but it received [" ++ Mode ++ "].")
+	end,
+
+	% each bike agent has a different personal speed
+	PersonalSpeed = traffic_models:get_personal_bike_speed(),
 
 	InitialState = setAttributes( ActorState, [
 		{ bike_name, BikeName },
