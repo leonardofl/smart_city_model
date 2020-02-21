@@ -137,23 +137,43 @@ request_position( State , Path ) ->
 	end.
 
 
-get_next_vertex( State , [ Current | Path ] ) ->	% baseado no Mode == walk do class_Car					
-	Vertices = list_to_atom( lists:concat( [ Current , lists:nth( 1 , Path ) ] )),
-	
-    LinkData = lists:nth( 1, ets:lookup( list_streets , Vertices ) ),
-    {_, Id, Length, Capacity, _Freespeed, NumberCars, _Lanes, _DR, IsCycleway, IsCyclelane, Inclination} = LinkData,
-    PersonalSpeed = getAttribute( State , personal_speed ),
-    NumberBikes = 1, % TODO obter NumberBikes
-    Speed = traffic_models:get_speed_bike(PersonalSpeed, Length, Capacity, NumberCars, NumberBikes, IsCycleway, IsCyclelane, Inclination), 
-    Time = round((Length / Speed) + 1),
-    Distance = round(Length),
+%get_next_vertex( State , [ Current | Path ] ) ->	% baseado no Mode == walk do class_Car					
+%	Vertices = list_to_atom( lists:concat( [ Current , lists:nth( 1 , Path ) ] )),
+%	
+%    LinkData = lists:nth( 1, ets:lookup( list_streets , Vertices ) ),
+%    {_, Id, Length, Capacity, _Freespeed, NumberCars, _Lanes, _DR, IsCycleway, IsCyclelane, Inclination} = LinkData,
+%    PersonalSpeed = getAttribute( State , personal_speed ),
+%    NumberBikes = 1, % TODO obter NumberBikes
+%    Speed = traffic_models:get_speed_bike(PersonalSpeed, Length, Capacity, NumberCars, NumberBikes, IsCycleway, IsCyclelane, Inclination), 
+%    Time = round((Length / Speed) + 1),
+%    Distance = round(Length),
+%
+%	TotalLength = getAttribute( State , distance ) + Distance,
+%	FinalState = setAttributes( State , [ { distance , TotalLength } , { bike_position , Id } , { path , Path } ] ), 
+%
+%	%print_movement( State ),
+%
+%	executeOneway( FinalState , addSpontaneousTick , class_Actor:get_current_tick_offset( FinalState ) + Time ).
 
-	TotalLength = getAttribute( State , distance ) + Distance,
-	FinalState = setAttributes( State , [ { distance , TotalLength } , { bike_position , Id } , { path , Path } ] ), 
 
-	%print_movement( State ),
+get_next_vertex( State, [ CurrentVertex | _ ] ) -> % Baseado no Mode != walk do class_car
+	LastVertex = getAttribute(State, last_vertex),
 
-	executeOneway( FinalState , addSpontaneousTick , class_Actor:get_current_tick_offset( FinalState ) + Time ).
+	% Current vertex is an atom here, but at the ets it is a string. Must convert:
+	CurrentVertexStr = lists:flatten(io_lib:format("~s", [CurrentVertex])),
+	Matches = ets:lookup(traffic_signals, CurrentVertexStr),
+
+	case length(Matches) of
+		0 -> move_to_next_vertex(State);
+	 	_ -> 	
+			case LastVertex of
+				ok -> move_to_next_vertex(State);
+				_ ->
+					{_, TrafficSignalsPid} = lists:nth(1, Matches),
+					class_Actor:send_actor_message(TrafficSignalsPid, {querySignalState, LastVertex}, State)
+			end
+	 end.
+
 
 
 move_to_next_vertex( State ) ->
@@ -167,14 +187,17 @@ move_to_next_vertex( State ) ->
 		_ -> ets:update_counter( list_streets, DecrementVertex , { 6 , -1 })
 	end,	
 	ets:update_counter( list_streets , Edge , { 6 , 1 }),
-	DataReturn = lists:nth(1, ets:lookup(list_streets , Edge)),
-	{ Data, NewState } = { DataReturn , State },
+	
+    LinkData = lists:nth(1, ets:lookup(list_streets , Edge)),
+    {_, Id, Length, Capacity, _Freespeed, NumberCars, _Lanes, _DR, IsCycleway, IsCyclelane, Inclination} = LinkData,
+    PersonalSpeed = getAttribute( State , personal_speed ),
+    NumberBikes = 1, % TODO obter NumberBikes
+    Speed = traffic_models:get_speed_bike(PersonalSpeed, Length, Capacity, NumberCars, NumberBikes, IsCycleway, IsCyclelane, Inclination), 
+    Time = round((Length / Speed) + 1),
+    Distance = round(Length),
 
-    DigitalRailsCapable = false,
-	{ Id , Time , Distance } = traffic_models:get_speed_car(Data, DigitalRailsCapable),
-
-	TotalLength = getAttribute( NewState , distance ) + Distance,
-	StateAfterMovement = setAttributes( NewState , [
+	TotalLength = getAttribute( State , distance ) + Distance,
+	StateAfterMovement = setAttributes( State , [
 		{distance , TotalLength} , {bike_position , Id} , {last_vertex, CurrentVertex}, {last_vertex_pid , Edge} , {path , [NextVertex | Path]}] ), 
 
 	% io:format("t=~p: ~p; ~p->~p ~n", [class_Actor:get_current_tick_offset(State), getAttribute(State, bike_name), CurrentVertex, NextVertex]),
@@ -183,6 +206,10 @@ move_to_next_vertex( State ) ->
 
 %	print_movement(State, StateAfterMovement),
 	executeOneway( StateAfterMovement , addSpontaneousTick , class_Actor:get_current_tick_offset( StateAfterMovement ) + Time ).
+
+
+
+
 
 -spec receive_signal_state(wooper:state(), tuple(), pid()) -> oneway_return().
 receive_signal_state( State , {Color, TicksUntilNextColor}, _TrafficLightPid ) -> 
