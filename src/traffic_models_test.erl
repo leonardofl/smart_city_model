@@ -37,15 +37,17 @@ test_cicleway_speed_must_be_greater_than_ciclelane_speed() ->
     NumberBikes = 15,
     IsCycleway = true,
     IsCyclelane = false,
+    Occupation = occupation_for(NumberCars, NumberBikes, IsCycleway, IsCyclelane),
     Inclination = 0,
 
-    SpeedInCicleway = traffic_models:get_speed_bike(PersonalSpeed, Capacity, NumberCars, NumberBikes, IsCycleway, IsCyclelane, Inclination),
+    SpeedInCicleway = traffic_models:get_speed_bike(PersonalSpeed, Capacity, Occupation, IsCycleway, IsCyclelane, Inclination),
     assertReasonableSpeed(SpeedInCicleway),
 
     IsCycleway2 = false,
     IsCyclelane2 = true,
+    Occupation2 = occupation_for(NumberCars, NumberBikes, IsCycleway2, IsCyclelane2),
 
-    SpeedInCiclelane = traffic_models:get_speed_bike(PersonalSpeed, Capacity, NumberCars, NumberBikes, IsCycleway2, IsCyclelane2, Inclination),
+    SpeedInCiclelane = traffic_models:get_speed_bike(PersonalSpeed, Capacity, Occupation2, IsCycleway2, IsCyclelane2, Inclination),
     assertReasonableSpeed(SpeedInCiclelane),
 
     assertXGreaterThanY(SpeedInCicleway, SpeedInCiclelane),
@@ -53,6 +55,13 @@ test_cicleway_speed_must_be_greater_than_ciclelane_speed() ->
     fimDoTestCase().
 
 
+occupation_for(NumberCars, NumberBikes, IsCycleway, IsCyclelane) ->
+    if
+        IsCycleway or IsCyclelane ->
+            NumberBikes/2.5;
+        true ->
+            NumberCars + NumberBikes/5
+    end.
 
 
 test_mixed_traffic_speed_must_be_greater_than_cycleway_speed() ->
@@ -62,19 +71,20 @@ test_mixed_traffic_speed_must_be_greater_than_cycleway_speed() ->
 
     PersonalSpeed = 12/3.6,
     Capacity = 100,
-    NumberCars = 0,
-    NumberBikes = 15,
+    NumberCars = 10,
+    NumberBikes = 5,
     IsCycleway = false,
     IsCyclelane = false,
+    Occupation = occupation_for(NumberCars, NumberBikes, IsCycleway, IsCyclelane),
     Inclination = 0,    
 
-    SpeedInMixedTraffic = traffic_models:get_speed_bike(PersonalSpeed, Capacity, NumberCars, NumberBikes, IsCycleway, IsCyclelane, Inclination),
+    SpeedInMixedTraffic = traffic_models:get_speed_bike(PersonalSpeed, Capacity, Occupation, IsCycleway, IsCyclelane, Inclination),
     assertReasonableSpeed(SpeedInMixedTraffic),
 
     IsCycleway2 = true,
     IsCyclelane2 = false,
 
-    SpeedInCycleway = traffic_models:get_speed_bike(PersonalSpeed, Capacity, NumberCars, NumberBikes, IsCycleway2, IsCyclelane2, Inclination),
+    SpeedInCycleway = traffic_models:get_speed_bike(PersonalSpeed, Capacity, Occupation, IsCycleway2, IsCyclelane2, Inclination),
     assertReasonableSpeed(SpeedInMixedTraffic),
 
     assertXGreaterThanY(SpeedInMixedTraffic, SpeedInCycleway),
@@ -96,14 +106,15 @@ test_descent_speed_must_be_greater_than_plane_speed() ->
     NumberBikes = 15,
     IsCycleway = false,
     IsCyclelane = true,
+    Occupation = occupation_for(NumberCars, NumberBikes, IsCycleway, IsCyclelane),
     Inclination = (700 - 760)/10,
 
-    SpeedInDescent = traffic_models:get_speed_bike(PersonalSpeed, Capacity, NumberCars, NumberBikes, IsCycleway, IsCyclelane, Inclination),
+    SpeedInDescent = traffic_models:get_speed_bike(PersonalSpeed, Capacity, Occupation, IsCycleway, IsCyclelane, Inclination),
     assertReasonableSpeed(SpeedInDescent),
 
     Inclination2 = 0,
 
-    SpeedInPlane = traffic_models:get_speed_bike(PersonalSpeed, Capacity, NumberCars, NumberBikes, IsCycleway, IsCyclelane, Inclination2),
+    SpeedInPlane = traffic_models:get_speed_bike(PersonalSpeed, Capacity, Occupation, IsCycleway, IsCyclelane, Inclination2),
     assertReasonableSpeed(SpeedInPlane),
 
     assertXGreaterThanY(SpeedInDescent, SpeedInPlane),
@@ -124,14 +135,15 @@ test_plane_speed_must_be_greater_than_climb_speed() ->
     NumberBikes = 15,
     IsCycleway = false,
     IsCyclelane = true,
+    Occupation = occupation_for(NumberCars, NumberBikes, IsCycleway, IsCyclelane),
     Inclination = 0,
 
-    SpeedInPlane = traffic_models:get_speed_bike(PersonalSpeed, Capacity, NumberCars, NumberBikes, IsCycleway, IsCyclelane, Inclination),
+    SpeedInPlane = traffic_models:get_speed_bike(PersonalSpeed, Capacity, Occupation, IsCycleway, IsCyclelane, Inclination),
     assertReasonableSpeed(SpeedInPlane),
 
     Inclination2 = (780 - 760)/10,
 
-    SpeedInClimb = traffic_models:get_speed_bike(PersonalSpeed, Capacity, NumberCars, NumberBikes, IsCycleway, IsCyclelane, Inclination2),
+    SpeedInClimb = traffic_models:get_speed_bike(PersonalSpeed, Capacity, Occupation, IsCycleway, IsCyclelane, Inclination2),
     assertReasonableSpeed(SpeedInClimb),
 
     assertXGreaterThanY(SpeedInPlane, SpeedInClimb),
@@ -158,15 +170,17 @@ test_speed_is_greater_for_less_occupation_when_cicleway() ->
     NumberBikes = 5,
     IsCycleway = true,
     IsCyclelane = false,
+    Occupation = occupation_for(NumberCars, NumberBikes, IsCycleway, IsCyclelane),
     Inclination = 0,
 
-    SpeedWithLessOccupation = traffic_models:get_speed_bike(PersonalSpeed, Capacity, NumberCars, NumberBikes, IsCycleway, IsCyclelane, Inclination),
+    SpeedWithLessOccupation = traffic_models:get_speed_bike(PersonalSpeed, Capacity, Occupation, IsCycleway, IsCyclelane, Inclination),
     assertReasonableSpeed(SpeedWithLessOccupation),
 
     NumberCars2 = 30,
     NumberBikes2 = 40,
+    Occupation2 = occupation_for(NumberCars2, NumberBikes2, IsCycleway, IsCyclelane),
 
-    SpeedWithMoreOccupation = traffic_models:get_speed_bike(PersonalSpeed, Capacity, NumberCars2, NumberBikes2, IsCycleway, IsCyclelane, Inclination),
+    SpeedWithMoreOccupation = traffic_models:get_speed_bike(PersonalSpeed, Capacity, Occupation2, IsCycleway, IsCyclelane, Inclination),
     assertReasonableSpeed(SpeedWithMoreOccupation),
 
     assertXGreaterThanY(SpeedWithLessOccupation, SpeedWithMoreOccupation),
@@ -185,15 +199,17 @@ test_speed_is_greater_for_less_occupation_when_mixed_traffic() ->
     NumberBikes = 5,
     IsCycleway = false,
     IsCyclelane = false,
+    Occupation = occupation_for(NumberCars, NumberBikes, IsCycleway, IsCyclelane),
     Inclination = 0,
 
-    SpeedWithLessOccupation = traffic_models:get_speed_bike(PersonalSpeed, Capacity, NumberCars, NumberBikes, IsCycleway, IsCyclelane, Inclination),
+    SpeedWithLessOccupation = traffic_models:get_speed_bike(PersonalSpeed, Capacity, Occupation, IsCycleway, IsCyclelane, Inclination),
     assertReasonableSpeed(SpeedWithLessOccupation),
 
     NumberCars2 = 30,
     NumberBikes2 = 40,
+    Occupation2 = occupation_for(NumberCars2, NumberBikes2, IsCycleway, IsCyclelane),
 
-    SpeedWithMoreOccupation = traffic_models:get_speed_bike(PersonalSpeed, Capacity, NumberCars2, NumberBikes2, IsCycleway, IsCyclelane, Inclination),
+    SpeedWithMoreOccupation = traffic_models:get_speed_bike(PersonalSpeed, Capacity, Occupation2, IsCycleway, IsCyclelane, Inclination),
     assertReasonableSpeed(SpeedWithMoreOccupation),
 
     assertXGreaterThanY(SpeedWithLessOccupation, SpeedWithMoreOccupation),
@@ -214,9 +230,10 @@ test_speed_is_1ms_for_saturated_link_when_cicleway() ->
     NumberBikes = 501,
     IsCycleway = true,
     IsCyclelane = false,
+    Occupation = occupation_for(NumberCars, NumberBikes, IsCycleway, IsCyclelane),
     Inclination = 0,
 
-    SpeedInSaturatedLink = traffic_models:get_speed_bike(PersonalSpeed, Capacity, NumberCars, NumberBikes, IsCycleway, IsCyclelane, Inclination),
+    SpeedInSaturatedLink = traffic_models:get_speed_bike(PersonalSpeed, Capacity, Occupation, IsCycleway, IsCyclelane, Inclination),
     assertEquals(SpeedInSaturatedLink, 1),
     
     fimDoTestCase().
@@ -230,7 +247,7 @@ test_speed_is_1ms_for_saturated_link_when_cicleway() ->
 
 test_speed_is_1ms_for_saturated_link_when_mixed_traffic() ->
 
-    CaseTest = "Velocidade tem que ser maior que 1m/s em via saturada, quando via é em tráfego misto",
+    CaseTest = "Velocidade tem que ser 1m/s em via saturada, quando via é em tráfego misto",
     io:format("Executando teste ~p~n", [CaseTest]),
 
     PersonalSpeed = 12/3.6,
@@ -239,9 +256,10 @@ test_speed_is_1ms_for_saturated_link_when_mixed_traffic() ->
     NumberBikes = 51,
     IsCycleway = false,
     IsCyclelane = false,
+    Occupation = occupation_for(NumberCars, NumberBikes, IsCycleway, IsCyclelane),
     Inclination = 0,
 
-    SpeedInSaturatedLink = traffic_models:get_speed_bike(PersonalSpeed, Capacity, NumberCars, NumberBikes, IsCycleway, IsCyclelane, Inclination),
+    SpeedInSaturatedLink = traffic_models:get_speed_bike(PersonalSpeed, Capacity, Occupation, IsCycleway, IsCyclelane, Inclination),
     assertEquals(SpeedInSaturatedLink, 1),
     
     fimDoTestCase().

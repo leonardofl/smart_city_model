@@ -1,6 +1,6 @@
 -module(traffic_models).
 
--export([get_speed_car/2, get_speed_walk/2, get_speed_bike/7, get_personal_bike_speed/0]).
+-export([get_speed_car/2, get_speed_walk/2, get_speed_bike/6, get_personal_bike_speed/0]).
 
 % There is DR in link and car can use it:
 get_speed_car({_, Id, Length, RawCapacity, Freespeed, NumberCars, Lanes, {_DRName, _DigitalRailsLanes, _Cycle, _Bandwidth, _Signalized, _Offset}}, true) ->
@@ -77,12 +77,15 @@ get_next_value_from_speeds_distribution() ->
 % Capacity: how many cars the link supports
 % NumberBikes: how many bikes are in the link
 % NumberCars: how many cars are in the link
+% Occupation: the count of vehicles in the link; one unit corresponds to one car; 
+%             one bike counts 1/5 of occupation for mixed traffic and
+%                             1/2.5 for cicleways and cyclelanes.
 % IsCycleway: boolean
 % IsCyclelane: boolean
 % Inclination: (altitude_to - altitude_from) / length 
-get_speed_bike(PersonalSpeed, Capacity, NumberCars, NumberBikes, IsCycleway, IsCyclelane, Inclination) ->
+get_speed_bike(PersonalSpeed, Capacity, Occupation, IsCycleway, IsCyclelane, Inclination) ->
     Freespeed = get_free_speed_for_bike(PersonalSpeed, IsCycleway, IsCyclelane, Inclination),
-    Speed = speed_for_bike_considering_traffic(Freespeed, Capacity, NumberCars, NumberBikes, IsCycleway, IsCyclelane),
+    Speed = speed_for_bike_considering_traffic(Freespeed, Capacity, Occupation),
     Speed.
 
 
@@ -121,18 +124,8 @@ get_free_speed_for_bike(PersonalSpeed, IsCycleway, IsCyclelane, Inclination) ->
 
 
 
-speed_for_bike_considering_traffic(BaseSpeed, Capacity, NumberCars, NumberBikes, IsCycleway, IsCyclelane) ->
+speed_for_bike_considering_traffic(BaseSpeed, Capacity, Occupation) ->
 
-    IsMixedTraffic = (not IsCycleway) and (not IsCyclelane),
-    Occupation = if
-        IsMixedTraffic ->
-            % cellsize do carro = 7,5 e cellsize da bike = 3
-            % cellsize é o comprimento do veículo mais a distância de segurança
-            % Considera também que em uma faixa de carro passam duas bikes uma do lado da outra 
-            NumberBikes/(2.5*2) + NumberCars;
-        true -> % ciclovia ou ciclofaixa (é uma bike atrás da outra)
-            NumberBikes/(2.5*1)
-    end,
     SaturatedLink = Occupation >= Capacity,
 
 	Alpha = 1,
